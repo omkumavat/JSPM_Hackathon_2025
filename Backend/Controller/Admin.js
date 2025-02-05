@@ -1,4 +1,5 @@
 // controllers/taskController.js
+import mongoose from "mongoose";
 import Task from '../Models/Task.js';
 import Admin from '../Models/Admin.js';
 import Queue from '../Models/Queue.js';
@@ -34,6 +35,9 @@ export const createAdmin = async (req, res) => {
 };
 
 export const createTaskForAdmin = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction(); // Start a transaction
+
   try {
     const adminId = req.params.adminId;
     const { task_name, description, tags, execution_time = 1, priority } = req.body;
@@ -41,11 +45,13 @@ export const createTaskForAdmin = async (req, res) => {
     // Step 1: Create and save the new Task document
     const taskData = { task_name, description, execution_time, tags, priority };
     const newTask = new Task(taskData);
-    await newTask.save();
+    await newTask.save({ session });
 
-    // Step 2: Find the Admin by ID
-    const admin = await Admin.findById(adminId);
+    // Step 2: Find the Admin by ID (inside the transaction)
+    const admin = await Admin.findById(adminId).session(session);
     if (!admin) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: "Admin not found" });
     }
 
@@ -55,64 +61,56 @@ export const createTaskForAdmin = async (req, res) => {
       status: "not_assigned",
       createdAt: new Date(),
     });
-    await newQueueItem.save();
+    await newQueueItem.save({ session });
 
     // Push the new Queue document's ID into the admin's taskQueue array
     admin.taskQueue.push(newQueueItem._id);
-    await admin.save();
+    await admin.save({ session });
 
-    // Step 4: Fetch all pending tasks
-    const pendingQueueItems = await Queue.find({ status: "not_assigned" }).populate("task");
+    // Step 4: Fetch all pending tasks inside the transaction
+    const pendingQueueItems = await Queue.find({ status: "not_assigned" }).populate("task").session(session);
 
-    // Parallel updates for better efficiency
-    const updatePromises = pendingQueueItems.map(async (queueItem) => {
+    for (const queueItem of pendingQueueItems) {
       const taskToAssign = queueItem.task;
-      if (!taskToAssign) return null; // Skip if task is missing
+      if (!taskToAssign) continue; // Skip if task is missing
 
-      // Find available workers with (currentLoad + execution_time) < 20
-      const availableWorkers = await Worker.find({
-        status: "available", // Fetch only available workers
-        $expr: {
-          $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 50]
-        }
-      }).sort({ currentLoad: 1 });
+      // Step 5: Find the first available worker **inside the transaction**
+      const chosenWorker = await Worker.findOne({
+        status: "available",
+        $expr: { $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 50] }
+      })
+        .sort({ currentLoad: 1 }) // Prefer the worker with the least load
+        .session(session); // Ensure the query runs inside the transaction
 
-      if (availableWorkers.length > 0) {
-        const chosenWorker = availableWorkers[0];
-        let taskUpdate = { status: "in-progress", assigned_worker: chosenWorker._id };
-        let queueUpdate = {}; // To store queue update conditionally
+      if (!chosenWorker) continue; // No available worker, skip this task
 
-        // Assign task to worker
-        if (!chosenWorker.currentTask) {
-          chosenWorker.currentTask = taskToAssign._id;
-          taskUpdate.updatedAt = Date.now();  // Update timestamp only if assigned to `currentTask`
-          queueUpdate.status = "assigned";   // Update queue status only if assigned
-        } else {
-          chosenWorker.pendingTask.push(taskToAssign._id);
-          queueUpdate.status = "assigned";   // Update queue status if task goes to pendingTask
-        }
+      let taskUpdate = { status: "in-progress", assigned_worker: chosenWorker._id };
+      let queueUpdate = {}; // To store queue update conditionally
 
-        // Increase worker load safely
-        chosenWorker.currentLoad += taskToAssign.execution_time;
-
-        // Save worker and update task & queue status in parallel
-        const updateOperations = [
-          chosenWorker.save(),
-          Task.findByIdAndUpdate(taskToAssign._id, taskUpdate)
-        ];
-
-        if (queueUpdate.status) {
-          updateOperations.push(Queue.findByIdAndUpdate(queueItem._id, queueUpdate));
-        }
-
-        return Promise.all(updateOperations);
+      // Assign task to worker
+      if (!chosenWorker.currentTask) {
+        chosenWorker.currentTask = taskToAssign._id;
+        taskUpdate.updatedAt = Date.now();  // Update timestamp only if assigned to `currentTask`
+        queueUpdate.status = "assigned";   // Update queue status only if assigned
+      } else {
+        chosenWorker.pendingTask.push(taskToAssign._id);
+        queueUpdate.status = "assigned";   // Update queue status if task goes to pendingTask
       }
 
-      return null; // If no worker was assigned
-    });
+      // Increase worker load safely
+      chosenWorker.currentLoad += taskToAssign.execution_time;
 
-    // Execute all update promises, filtering out `null` values
-    await Promise.all(updatePromises.filter(Boolean));
+      // Save worker, update task & queue status in the same transaction
+      await chosenWorker.save({ session });
+      await Task.findByIdAndUpdate(taskToAssign._id, taskUpdate, { session });
+      if (queueUpdate.status) {
+        await Queue.findByIdAndUpdate(queueItem._id, queueUpdate, { session });
+      }
+    }
+
+    // Commit transaction after a successful update
+    await session.commitTransaction();
+    session.endSession();
 
     return res.status(201).json({
       message: "Task created successfully and scheduling attempted for pending tasks",
@@ -121,6 +119,8 @@ export const createTaskForAdmin = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in createTaskForAdmin:", error);
+    await session.abortTransaction(); // Rollback in case of error
+    session.endSession();
     return res.status(500).json({
       message: "Internal Server Error",
       error: error.message,
@@ -128,65 +128,64 @@ export const createTaskForAdmin = async (req, res) => {
   }
 };
 
+
+
 export const fetchForEverySecond = async () => {
+  const session = await mongoose.startSession();
+  session.startTransaction(); // Start a transaction
+
   try {
     // Step 1: Fetch all pending tasks from the queue
     const pendingQueueItems = await Queue.find({ status: "not_assigned" }).populate("task");
 
-    // Step 2: Process each pending task
-    const updatePromises = pendingQueueItems.map(async (queueItem) => {
+    for (const queueItem of pendingQueueItems) {
       const taskToAssign = queueItem.task;
-      if (!taskToAssign) return null; // Skip if task is missing
+      if (!taskToAssign) continue; // Skip if task is missing
 
-      // Find available workers with (currentLoad + execution_time) < 50
-      const availableWorkers = await Worker.find({
+      // Step 2: Find the first available worker **inside the transaction**
+      const chosenWorker = await Worker.findOne({
         status: "available",
-        $expr: {
-          $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 50]
-        }
-      }).sort({ currentLoad: 1 });
+        $expr: { $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 50] }
+      })
+        .sort({ currentLoad: 1 })
+        .session(session); // Ensure the query runs inside the transaction
 
-      if (availableWorkers.length > 0) {
-        const chosenWorker = availableWorkers[0];
-        let taskUpdate = { status: "in-progress", assigned_worker: chosenWorker._id };
-        let queueUpdate = {}; // To store queue update conditionally
+      if (!chosenWorker) continue; // No available worker, skip this task
 
-        // Assign task to worker
-        if (!chosenWorker.currentTask) {
-          chosenWorker.currentTask = taskToAssign._id;
-          taskUpdate.updatedAt = Date.now();
-          queueUpdate.status = "assigned";
-        } else {
-          chosenWorker.pendingTask.push(taskToAssign._id);
-          queueUpdate.status = "assigned";
-        }
+      let taskUpdate = { status: "in-progress", assigned_worker: chosenWorker._id };
+      let queueUpdate = {}; // To store queue update conditionally
 
-        // Increase worker load safely
-        chosenWorker.currentLoad += taskToAssign.execution_time;
-
-        // Save worker and update task & queue status in parallel
-        const updateOperations = [
-          chosenWorker.save(),
-          Task.findByIdAndUpdate(taskToAssign._id, taskUpdate)
-        ];
-
-        if (queueUpdate.status) {
-          updateOperations.push(Queue.findByIdAndUpdate(queueItem._id, queueUpdate));
-        }
-
-        return Promise.all(updateOperations);
+      // Assign task to worker
+      if (!chosenWorker.currentTask) {
+        chosenWorker.currentTask = taskToAssign._id;
+        taskUpdate.updatedAt = Date.now();
+        queueUpdate.status = "assigned";
+      } else {
+        chosenWorker.pendingTask.push(taskToAssign._id);
+        queueUpdate.status = "assigned";
       }
 
-      return null; // If no worker was assigned
-    });
+      // Increase worker load safely
+      chosenWorker.currentLoad += taskToAssign.execution_time;
 
-    // Execute all update promises, filtering out `null` values
-    await Promise.all(updatePromises.filter(Boolean));
+      // Save worker, update task & queue status in the same transaction
+      await chosenWorker.save({ session });
+      await Task.findByIdAndUpdate(taskToAssign._id, taskUpdate, { session });
+      if (queueUpdate.status) {
+        await Queue.findByIdAndUpdate(queueItem._id, queueUpdate, { session });
+      }
 
+      // Commit transaction after a successful update
+      await session.commitTransaction();
+      session.endSession();
+    }
   } catch (error) {
     console.error("Error in fetchForEverySecond:", error);
+    await session.abortTransaction(); // Rollback in case of error
+    session.endSession();
   }
 };
+
 
 // Run every second
 cron.schedule('*/5 * * * * *', async () => {
