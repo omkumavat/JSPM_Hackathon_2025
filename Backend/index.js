@@ -27,6 +27,12 @@ import EmailRoute from './Routes/EmailRoute.js';
 app.use('/server/email',EmailRoute)
 app.use('/server/admin',AdminRoute)
 
+import WorkerRoute from './Routes/WorkerRoute.js';
+app.use('/server/worker',WorkerRoute)
+
+import TaskRoute from './Routes/TaskRoute.js';
+app.use('/server/task',TaskRoute)
+
 app.get('/', (req, res) => {
   res.send('Hello World')
 })

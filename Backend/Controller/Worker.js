@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
-import Worker from '../Models/Worker';
+import Worker from '../Models/Worker.js';
 import jwt from 'jsonwebtoken';
+import Admin from '../Models/Admin.js';
 
 export const signUpWorker = async (req, res) => {
     try {
@@ -39,11 +40,25 @@ export const signUpWorker = async (req, res) => {
             completedTask: []
         });
 
+        // Save the new worker to the database
         await newWorker.save();
+
+        // Now find the admin and push the worker's ID into the workers array
+        const admin = await Admin.findOne({ email: 'abc@gmail.com' }); // Replace with your admin's email or other criteria
+
+        if (admin) {
+            admin.workers.push(newWorker._id);  // Add the worker's ID to the workers array of the admin
+            await admin.save();  // Save the updated admin document
+        } else {
+            return res.status(404).json({
+                success: false,
+                message: "Admin not found"
+            });
+        }
 
         return res.status(201).json({
             success: true,
-            message: "Worker created successfully",
+            message: "Worker created successfully and added to admin's workers list",
             data: newWorker
         });
     } catch (err) {
@@ -122,3 +137,49 @@ export const loginWorker = async (req, res) => {
 
 
 
+export const setWorkerStatusOffline = async (req, res) => {
+    try {
+        const { workerId } = req.params;
+
+        // Find the worker by ID
+        const worker = await Worker.findById(workerId);
+        if (!worker) {
+            return res.status(404).json({
+                success: false,
+                message: 'Worker not found',
+            });
+        }
+
+        // Update the worker's status to 'offline'
+        worker.status = 'offline';
+
+        // Save the updated worker document
+        await worker.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Worker status updated to offline',
+            worker,
+        });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
+            success: false,
+            message: 'Error updating worker status',
+        });
+    }
+};
+
+export const getAllWorkers = async (req, res) => {
+    try {
+
+      const workers = await Worker.find({});
+      res.status(200).json(workers);
+
+    } catch (error) {
+
+      console.error("Error fetching workers:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+      
+    }
+  };
