@@ -2,6 +2,9 @@ import bcrypt from 'bcryptjs';
 import Worker from '../Models/Worker.js';
 import jwt from 'jsonwebtoken';
 import Admin from '../Models/Admin.js';
+import Queue from '../Models/Queue.js';
+import Task from '../Models/Task.js';
+import cron from 'node-cron';
 
 export const signUpWorker = async (req, res) => {
     try {
@@ -134,9 +137,6 @@ export const loginWorker = async (req, res) => {
     }
 };
 
-
-
-
 export const setWorkerStatusOffline = async (req, res) => {
     try {
         const { workerId } = req.params;
@@ -188,19 +188,19 @@ export const setWorkerStatusOffline = async (req, res) => {
         worker.currentLoad = 0;
         worker.status = 'offline';
 
-        // Save the updated worker document
         await worker.save();
 
         return res.status(200).json({
             success: true,
-            message: 'Worker status updated to offline',
-            worker,
+            message: 'Worker status updated to offline, tasks set to not_assigned & pending',
         });
+
     } catch (err) {
-        console.error(err);
+        console.error("Error updating worker status:", err);
         return res.status(500).json({
             success: false,
             message: 'Error updating worker status',
+            error: err.message,
         });
     }
 };
@@ -208,13 +208,86 @@ export const setWorkerStatusOffline = async (req, res) => {
 export const getAllWorkers = async (req, res) => {
     try {
 
-      const workers = await Worker.find({});
-      res.status(200).json(workers);
+        const workers = await Worker.find({});
+        res.status(200).json(workers);
 
     } catch (error) {
 
-      console.error("Error fetching workers:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
+      
+        console.error("Error fetching workers:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
 
     }
-  };
+};
+
+
+// controllers/taskAndWorkerController.js
+
+
+export const checkAndCompleteAndReassign = async () => {
+  try {
+    const now = Date.now();
+
+ 
+    const tasks = await Task.find({
+      status: "in-progress",
+      execution_time: { $ne: null }
+    });
+    for (let task of tasks) {
+      // Convert execution_time from seconds to milliseconds (adjust if your unit is different)
+      const executionTimeMs = task.execution_time * 1000;
+      const finishTime = task.updatedAt.getTime() + executionTimeMs;
+
+    //   console.log(now  ," sof " , finishTime);
+
+      if (finishTime <= now) {
+        task.status = "completed";
+        task.completedAt = new Date();
+        await task.save();
+        // console.log(`    Task ${task._id} marked as completed.`);
+      }
+    }
+
+   
+    const workers = await Worker.find({});
+    for (let worker of workers) {
+      let needToSave = false;
+      // If there's a current task, check if it's completed
+      if (worker.currentTask) {
+        const currentTask = await Task.findById(worker.currentTask);
+        if (currentTask && currentTask.status === "completed") {
+          // Move currentTask to completedTask array
+          worker.completedTask.push(worker.currentTask);
+        //   console.log(worker.currentLoad + "dfdsf   " + currentTask.execution_time);
+          worker.currentLoad -= currentTask.execution_time
+        //   console.log(worker.currentLoad + "dfdsf   " + currentTask.execution_time);
+          worker.currentTask = null;
+          console.log(`Worker ${worker._id} completed task ${currentTask._id}`);
+          needToSave = true;
+        }
+      }
+      
+    
+      if ((!worker.currentTask) && worker.pendingTask && worker.pendingTask.length > 0) {
+        const nextTask = worker.pendingTask.shift(); // remove the first pending task (FIFO)
+        nextTask.updatedAt = Date.now();
+        worker.currentTask = nextTask;
+        console.log(`Worker ${worker._id} assigned new task ${nextTask}`);
+        needToSave = true;
+      }
+
+      if (needToSave) {
+        await worker.save();
+      }
+    }
+  } catch (error) {
+    console.error("Error in checkAndCompleteAndReassign:", error);
+  }
+};
+
+
+cron.schedule('*/1 * * * * *', () => {
+// console.log('Running scheduled task check and worker reassignment...');
+checkAndCompleteAndReassign();
+});
+
