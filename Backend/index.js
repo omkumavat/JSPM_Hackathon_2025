@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
+import AdminRoute from "./Routes/AdminRoute.js"
 
 const app = express();
 app.use(bodyParser.json({ limit: '100mb' })); // Adjust the limit as needed
@@ -24,6 +25,7 @@ app.use(cors({
 
 import EmailRoute from './Routes/EmailRoute.js';
 app.use('/server/email',EmailRoute)
+app.use('/server/admin',AdminRoute)
 
 app.get('/', (req, res) => {
   res.send('Hello World')
