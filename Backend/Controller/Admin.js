@@ -68,36 +68,43 @@ export const createTaskForAdmin = async (req, res) => {
       const taskToAssign = queueItem.task;
       if (!taskToAssign) return null; // Skip if task is missing
 
-      // Find available workers with (currentLoad + execution_time) < 10
+      // Find available workers with (currentLoad + execution_time) < 20
       const availableWorkers = await Worker.find({
         status: "available", // Fetch only available workers
         $expr: {
-          $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 10]
+          $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 20]
         }
       }).sort({ currentLoad: 1 });
 
       if (availableWorkers.length > 0) {
         const chosenWorker = availableWorkers[0];
-
         let taskUpdate = { status: "in-progress", assigned_worker: chosenWorker._id };
+        let queueUpdate = {}; // To store queue update conditionally
 
         // Assign task to worker
         if (!chosenWorker.currentTask) {
           chosenWorker.currentTask = taskToAssign._id;
-          taskUpdate.updatedAt = Date.now();  //  Update timestamp only if assigned to `currentTask`
+          taskUpdate.updatedAt = Date.now();  // Update timestamp only if assigned to `currentTask`
+          queueUpdate.status = "assigned";   // Update queue status only if assigned
         } else {
           chosenWorker.pendingTask.push(taskToAssign._id);
+          queueUpdate.status = "assigned";   // Update queue status if task goes to pendingTask
         }
 
         // Increase worker load safely
         chosenWorker.currentLoad += taskToAssign.execution_time;
 
         // Save worker and update task & queue status in parallel
-        return Promise.all([
+        const updateOperations = [
           chosenWorker.save(),
-          Task.findByIdAndUpdate(taskToAssign._id, taskUpdate),  // Updated conditionally
-          Queue.findByIdAndUpdate(queueItem._id, { status: "assigned" }),
-        ]);
+          Task.findByIdAndUpdate(taskToAssign._id, taskUpdate)
+        ];
+
+        if (queueUpdate.status) {
+          updateOperations.push(Queue.findByIdAndUpdate(queueItem._id, queueUpdate));
+        }
+
+        return Promise.all(updateOperations);
       }
 
       return null; // If no worker was assigned
