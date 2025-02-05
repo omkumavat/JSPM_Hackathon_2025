@@ -19,7 +19,7 @@ function App() {
       { name: 'Completed Task 2' }
     ]
   };
-
+  
   return (
     <div className="app-container">
       <div className="content">
