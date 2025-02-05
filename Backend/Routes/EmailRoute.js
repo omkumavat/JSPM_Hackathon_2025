@@ -1,7 +1,7 @@
 import express from 'express';
 const router = express.Router();
 
-import { sendSignUpSuccessfulEmail } from '../Controller/EmailService';
+import { sendSignUpSuccessfulEmail } from '../Controller/EmailService.js';
 
 router.post('/send-signup-mail',sendSignUpSuccessfulEmail)
 

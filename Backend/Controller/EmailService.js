@@ -2,6 +2,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import Handlebars from "handlebars";
 import * as dotenv from "dotenv";
+import nodemailer from "nodemailer";
+import fs from "fs";
 
 dotenv.config();
 

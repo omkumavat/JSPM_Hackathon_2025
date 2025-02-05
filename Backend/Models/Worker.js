@@ -14,15 +14,13 @@ const Worker = new mongoose.Schema({
   password: {
     type: String,
     required: true
-},
-  // 
+}, 
   status: {
     type: String,
     enum: ['available', 'busy', 'offline'],
     default: 'available',
     required: true
   },
- 
   currentTask: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Task',
@@ -30,7 +28,8 @@ const Worker = new mongoose.Schema({
   },
   lastNotifiedAt: {
     type: Date
-  }
+  },
+  completedTask : [ {type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null} ]
 }, {
   timestamps: true 
 });
