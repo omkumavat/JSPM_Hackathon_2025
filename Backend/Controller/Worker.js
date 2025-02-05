@@ -2,8 +2,6 @@ import bcrypt from 'bcryptjs';
 import Worker from '../Models/Worker.js';
 import jwt from 'jsonwebtoken';
 import Admin from '../Models/Admin.js';
-import Queue from '../Models/Queue.js';
-import Task from '../Models/Task.js';
 
 export const signUpWorker = async (req, res) => {
     try {
@@ -136,6 +134,9 @@ export const loginWorker = async (req, res) => {
     }
 };
 
+
+
+
 export const setWorkerStatusOffline = async (req, res) => {
     try {
         const { workerId } = req.params;
@@ -187,19 +188,19 @@ export const setWorkerStatusOffline = async (req, res) => {
         worker.currentLoad = 0;
         worker.status = 'offline';
 
+        // Save the updated worker document
         await worker.save();
 
         return res.status(200).json({
             success: true,
-            message: 'Worker status updated to offline, tasks set to not_assigned & pending',
+            message: 'Worker status updated to offline',
+            worker,
         });
-
     } catch (err) {
-        console.error("Error updating worker status:", err);
+        console.error(err);
         return res.status(500).json({
             success: false,
             message: 'Error updating worker status',
-            error: err.message,
         });
     }
 };
@@ -207,13 +208,13 @@ export const setWorkerStatusOffline = async (req, res) => {
 export const getAllWorkers = async (req, res) => {
     try {
 
-        const workers = await Worker.find({});
-        res.status(200).json(workers);
+      const workers = await Worker.find({});
+      res.status(200).json(workers);
 
     } catch (error) {
 
-        console.error("Error fetching workers:", error);
-        res.status(500).json({ message: "Internal Server Error", error: error.message });
+      console.error("Error fetching workers:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
 
     }
-};
+  };
