@@ -189,6 +189,6 @@ export const fetchForEverySecond = async () => {
 };
 
 // Run every second
-cron.schedule('*/1 * * * * *', async () => {
+cron.schedule('*/5 * * * * *', async () => {
   await fetchForEverySecond();
 });
