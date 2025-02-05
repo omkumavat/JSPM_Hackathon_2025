@@ -12,7 +12,7 @@ const taskSchema = new mongoose.Schema({
     tags: [{ type: String }],
     execution_time: { type: Number, default: null },
     priority: { type: Number, default: 3, min: 1, max: 5 },
-    assigned_worker: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker' },
+    assigned_worker: { type: mongoose.Schema.Types.ObjectId, ref: 'Worker',default:null },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now },
 });

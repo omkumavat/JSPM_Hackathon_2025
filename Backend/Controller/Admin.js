@@ -35,8 +35,9 @@ export const createAdmin = async (req, res) => {
 export const createTaskForAdmin = async (req, res) => {
   try {
     const adminId = req.params.adminId;
-    const { task_name, description, tags, execution_time, priority } = req.body;
+    const { task_name, description, tags, execution_time = 1, priority } = req.body;
 
+    // Step 1: Create and save the new Task document
     const taskData = { task_name, description, execution_time, tags, priority };
     const newTask = new Task(taskData);
     await newTask.save();
@@ -65,35 +66,42 @@ export const createTaskForAdmin = async (req, res) => {
     // Parallel updates for better efficiency
     const updatePromises = pendingQueueItems.map(async (queueItem) => {
       const taskToAssign = queueItem.task;
-      if (!taskToAssign) return;
+      if (!taskToAssign) return null; // Skip if task is missing
 
-      // Look for available workers
-      const availableWorkers = await Worker.find({ currentLoad: { $lt: 10 } }).sort({ currentLoad: 1 });
+      // Find available workers with (currentLoad + execution_time) < 10
+      const availableWorkers = await Worker.find({
+        $expr: { $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 10] },
+      }).sort({ currentLoad: 1 });
 
       if (availableWorkers.length > 0) {
         const chosenWorker = availableWorkers[0];
 
-        // Assign task
+        // Assign task to worker
         if (!chosenWorker.currentTask) {
           chosenWorker.currentTask = taskToAssign._id;
         } else {
           chosenWorker.pendingTask.push(taskToAssign._id);
         }
 
-        // Increase worker load
-        chosenWorker.currentLoad += taskToAssign.execution_time || 1;
+        // Increase worker load safely
+        chosenWorker.currentLoad += taskToAssign.execution_time;
 
-        // Save worker and queue updates in parallel
+        // Save worker and update task & queue status in parallel
         return Promise.all([
           chosenWorker.save(),
-          Task.findByIdAndUpdate(taskToAssign._id, { status: "in-progress" },{assigned_worker:chosenWorker._id}), // Fixes direct object mutation
-          Queue.findByIdAndUpdate(queueItem._id, { status: "assigned" }), // Update queue status
+          Task.findByIdAndUpdate(taskToAssign._id, {
+            status: "in-progress",
+            assigned_worker: chosenWorker._id
+          }),
+          Queue.findByIdAndUpdate(queueItem._id, { status: "assigned" }),
         ]);
       }
+
+      return null; // If no worker was assigned
     });
 
-    // Execute all update promises concurrently
-    await Promise.all(updatePromises);
+    // Execute all update promises, filtering out `null` values
+    await Promise.all(updatePromises.filter(Boolean));
 
     return res.status(201).json({
       message: "Task created successfully and scheduling attempted for pending tasks",
