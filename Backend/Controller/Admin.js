@@ -3,6 +3,7 @@ import Task from '../Models/Task.js';
 import Admin from '../Models/Admin.js';
 import Queue from '../Models/Queue.js';
 import Worker from '../Models/Worker.js';
+import cron from 'node-cron';
 
 // controllers/adminController.js
 // import Admin from '../models/Admin.js';
@@ -126,3 +127,68 @@ export const createTaskForAdmin = async (req, res) => {
     });
   }
 };
+
+export const fetchForEverySecond = async () => {
+  try {
+    // Step 1: Fetch all pending tasks from the queue
+    const pendingQueueItems = await Queue.find({ status: "not_assigned" }).populate("task");
+
+    // Step 2: Process each pending task
+    const updatePromises = pendingQueueItems.map(async (queueItem) => {
+      const taskToAssign = queueItem.task;
+      if (!taskToAssign) return null; // Skip if task is missing
+
+      // Find available workers with (currentLoad + execution_time) < 50
+      const availableWorkers = await Worker.find({
+        status: "available",
+        $expr: {
+          $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 50]
+        }
+      }).sort({ currentLoad: 1 });
+
+      if (availableWorkers.length > 0) {
+        const chosenWorker = availableWorkers[0];
+        let taskUpdate = { status: "in-progress", assigned_worker: chosenWorker._id };
+        let queueUpdate = {}; // To store queue update conditionally
+
+        // Assign task to worker
+        if (!chosenWorker.currentTask) {
+          chosenWorker.currentTask = taskToAssign._id;
+          taskUpdate.updatedAt = Date.now();
+          queueUpdate.status = "assigned";
+        } else {
+          chosenWorker.pendingTask.push(taskToAssign._id);
+          queueUpdate.status = "assigned";
+        }
+
+        // Increase worker load safely
+        chosenWorker.currentLoad += taskToAssign.execution_time;
+
+        // Save worker and update task & queue status in parallel
+        const updateOperations = [
+          chosenWorker.save(),
+          Task.findByIdAndUpdate(taskToAssign._id, taskUpdate)
+        ];
+
+        if (queueUpdate.status) {
+          updateOperations.push(Queue.findByIdAndUpdate(queueItem._id, queueUpdate));
+        }
+
+        return Promise.all(updateOperations);
+      }
+
+      return null; // If no worker was assigned
+    });
+
+    // Execute all update promises, filtering out `null` values
+    await Promise.all(updatePromises.filter(Boolean));
+
+  } catch (error) {
+    console.error("Error in fetchForEverySecond:", error);
+  }
+};
+
+// Run every second
+cron.schedule('*/1 * * * * *', async () => {
+  await fetchForEverySecond();
+});
