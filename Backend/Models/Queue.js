@@ -21,4 +21,5 @@ const Queue = new Schema({
   }
 }); // Disable _id for each sub-document if you don't need individual IDs
 
-export default Queue;
+
+export default mongoose.model("Queue", Queue);

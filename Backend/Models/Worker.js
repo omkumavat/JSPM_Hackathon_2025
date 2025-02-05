@@ -15,8 +15,7 @@ const Worker = new mongoose.Schema({
     type: String,
     required: true
 }, 
-  status: {
-    type: String,
+  status: {    type: String,
     enum: ['available', 'busy', 'offline'],
     default: 'available',
     required: true
@@ -29,7 +28,8 @@ const Worker = new mongoose.Schema({
   lastNotifiedAt: {
     type: Date
   },
-  completedTask : [ {type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null} ]
+  completedTask : [ {type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null} ],
+  pendingTask : [ {type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null} ]
 }, {
   timestamps: true 
 });

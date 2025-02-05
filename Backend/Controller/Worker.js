@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import Worker from '../models/Worker.js';
+import Worker from '../Models/Worker.js';
 import jwt from 'jsonwebtoken';
 import Admin from '../Models/Admin.js';
 
