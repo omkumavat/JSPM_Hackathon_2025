@@ -38,3 +38,16 @@ const Worker = new mongoose.Schema({
 // module.exports = mongoose.model('Worker', Worker);
 export default mongoose.model("Worker", Worker);
 
+export const getAllWorkers = async (req, res) => {
+  try {
+  
+    const workers = await Worker.find({});
+  
+    res.status(200).json(workers);
+  } catch (error) {
+  
+    console.error("Error fetching workers:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};
+
