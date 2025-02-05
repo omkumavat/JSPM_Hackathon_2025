@@ -2,6 +2,8 @@ import bcrypt from 'bcryptjs';
 import Worker from '../Models/Worker.js';
 import jwt from 'jsonwebtoken';
 import Admin from '../Models/Admin.js';
+import Queue from '../Models/Queue.js';
+import Task from '../Models/Task.js';
 
 export const signUpWorker = async (req, res) => {
     try {
@@ -134,9 +136,6 @@ export const loginWorker = async (req, res) => {
     }
 };
 
-
-
-
 export const setWorkerStatusOffline = async (req, res) => {
     try {
         const { workerId } = req.params;
@@ -150,22 +149,58 @@ export const setWorkerStatusOffline = async (req, res) => {
             });
         }
 
-        // Update the worker's status to 'offline'
+        // Collect all tasks (current + pending)
+        const tasksToUpdate = [];
+
+        if (worker.currentTask) {
+            tasksToUpdate.push(worker.currentTask);
+        }
+
+        if (worker.pendingTask.length > 0) {
+            tasksToUpdate.push(...worker.pendingTask);
+        }
+
+        // Update queue items: set status to "not_assigned" and reset createdAt timestamp
+        await Queue.updateMany(
+            { task: { $in: tasksToUpdate } },
+            {
+                $set: {
+                    status: 'not_assigned',
+                    createdAt: Date.now()
+                }
+            }
+        );
+
+        // Update tasks: set assign_worker to null & status to "pending"
+        await Task.updateMany(
+            { _id: { $in: tasksToUpdate } },
+            {
+                $set: {
+                    assigned_worker: null,
+                    status: 'pending'
+                }
+            }
+        );
+
+        // Reset worker's task lists
+        worker.currentTask = null;
+        worker.pendingTask = [];
+        worker.currentLoad = 0;
         worker.status = 'offline';
 
-        // Save the updated worker document
         await worker.save();
 
         return res.status(200).json({
             success: true,
-            message: 'Worker status updated to offline',
-            worker,
+            message: 'Worker status updated to offline, tasks set to not_assigned & pending',
         });
+
     } catch (err) {
-        console.error(err);
+        console.error("Error updating worker status:", err);
         return res.status(500).json({
             success: false,
             message: 'Error updating worker status',
+            error: err.message,
         });
     }
 };
@@ -173,13 +208,13 @@ export const setWorkerStatusOffline = async (req, res) => {
 export const getAllWorkers = async (req, res) => {
     try {
 
-      const workers = await Worker.find({});
-      res.status(200).json(workers);
+        const workers = await Worker.find({});
+        res.status(200).json(workers);
 
     } catch (error) {
 
-      console.error("Error fetching workers:", error);
-      res.status(500).json({ message: "Internal Server Error", error: error.message });
-      
+        console.error("Error fetching workers:", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+
     }
-  };
+};
