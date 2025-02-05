@@ -76,13 +76,15 @@ export const createTaskForAdmin = async (req, res) => {
         }
       }).sort({ currentLoad: 1 });
 
-
       if (availableWorkers.length > 0) {
         const chosenWorker = availableWorkers[0];
+
+        let taskUpdate = { status: "in-progress", assigned_worker: chosenWorker._id };
 
         // Assign task to worker
         if (!chosenWorker.currentTask) {
           chosenWorker.currentTask = taskToAssign._id;
+          taskUpdate.updatedAt = Date.now();  //  Update timestamp only if assigned to `currentTask`
         } else {
           chosenWorker.pendingTask.push(taskToAssign._id);
         }
@@ -93,10 +95,7 @@ export const createTaskForAdmin = async (req, res) => {
         // Save worker and update task & queue status in parallel
         return Promise.all([
           chosenWorker.save(),
-          Task.findByIdAndUpdate(taskToAssign._id, {
-            status: "in-progress",
-            assigned_worker: chosenWorker._id
-          }),
+          Task.findByIdAndUpdate(taskToAssign._id, taskUpdate),  // Updated conditionally
           Queue.findByIdAndUpdate(queueItem._id, { status: "assigned" }),
         ]);
       }
@@ -120,4 +119,3 @@ export const createTaskForAdmin = async (req, res) => {
     });
   }
 };
-
