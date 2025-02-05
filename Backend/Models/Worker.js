@@ -30,7 +30,8 @@ const Worker = new mongoose.Schema({
   },
   lastNotifiedAt: {
     type: Date
-  }
+  },
+  completedTask : [ {type: mongoose.Schema.Types.ObjectId, ref: 'Task', default: null} ]
 }, {
   timestamps: true 
 });
