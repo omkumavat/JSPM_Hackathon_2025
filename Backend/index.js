@@ -25,6 +25,9 @@ app.use(cors({
 import EmailRoute from './Routes/EmailRoute.js';
 app.use('/server/email',EmailRoute)
 
+import WorkerRoute from './Routes/WorkerRoute.js';
+app.use('/server/worker',WorkerRoute)
+
 app.get('/', (req, res) => {
   res.send('Hello World')
 })
