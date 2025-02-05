@@ -182,7 +182,6 @@ export const setWorkerStatusOffline = async (req, res) => {
             }
         );
 
-        // Reset worker's task lists
         worker.currentTask = null;
         worker.pendingTask = [];
         worker.currentLoad = 0;
