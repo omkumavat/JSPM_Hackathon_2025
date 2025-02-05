@@ -70,8 +70,12 @@ export const createTaskForAdmin = async (req, res) => {
 
       // Find available workers with (currentLoad + execution_time) < 10
       const availableWorkers = await Worker.find({
-        $expr: { $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 10] },
+        status: "available", // Fetch only available workers
+        $expr: {
+          $lt: [{ $add: ["$currentLoad", taskToAssign.execution_time] }, 10]
+        }
       }).sort({ currentLoad: 1 });
+
 
       if (availableWorkers.length > 0) {
         const chosenWorker = availableWorkers[0];
