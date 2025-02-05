@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import Worker from '../Models/Worker.js';
+import Worker from '../models/Worker.js';
 import jwt from 'jsonwebtoken';
 import Admin from '../Models/Admin.js';
 
@@ -136,7 +136,7 @@ export const loginWorker = async (req, res) => {
 
 export const setWorkerStatusOffline = async (req, res) => {
     try {
-        const { workerId } = req.params; 
+        const { workerId } = req.params;
 
         // Find the worker by ID
         const worker = await Worker.findById(workerId);

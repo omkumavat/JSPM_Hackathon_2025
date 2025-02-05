@@ -1,28 +1,31 @@
 import mongoose from 'mongoose';
 import Queue from './Queue.js'; // Import the queue sub-schema
-import Worker from './Worker.js'; // Import the queue sub-schema
 
 const { Schema } = mongoose;
 
-const Admin = new Schema({
+const AdminSchema = new Schema({
   username: {
     type: String,
     required: true,
     trim: true
-},
-// In production, store hashed passwords!
-email: {
+  },
+  // In production, store hashed passwords!
+  email: {
     type: String,
     unique: true,
     trim: true
   },
-password: {
+  password: {
     type: String,
     required: true
-},
+  },
+  // The admin's task queue: an array of Queue sub-documents.
   taskQueue: [Queue],
+  // Reference to workers as ObjectId references instead of embedding the full Worker model.
+  workers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'Worker'
+  }]
+}, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 
-  workers : [Worker],
-}, { timestamps: true });
-
-export default mongoose.model('Admin', Admin);
+export default mongoose.model('Admin', AdminSchema);
