@@ -180,6 +180,6 @@ export const getAllWorkers = async (req, res) => {
 
       console.error("Error fetching workers:", error);
       res.status(500).json({ message: "Internal Server Error", error: error.message });
-      
+
     }
   };
