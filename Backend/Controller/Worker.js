@@ -134,6 +134,9 @@ export const loginWorker = async (req, res) => {
     }
 };
 
+
+
+
 export const setWorkerStatusOffline = async (req, res) => {
     try {
         const { workerId } = req.params;
@@ -166,3 +169,17 @@ export const setWorkerStatusOffline = async (req, res) => {
         });
     }
 };
+
+export const getAllWorkers = async (req, res) => {
+    try {
+
+      const workers = await Worker.find({});
+      res.status(200).json(workers);
+
+    } catch (error) {
+
+      console.error("Error fetching workers:", error);
+      res.status(500).json({ message: "Internal Server Error", error: error.message });
+      
+    }
+  };

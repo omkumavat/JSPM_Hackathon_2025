@@ -1,18 +1,33 @@
 {
-  "name": "frontend",
+  "name": "react-tailwind-css-starter-pack",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "cra-template": "1.2.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "@react-three/fiber": "^8.17.14",
+    "@types/three": "^0.173.0",
+    "axios": "^1.7.9",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.474.0",
+    "motion": "^12.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.1.5",
     "react-scripts": "5.0.1",
-    "web-vitals": "^4.2.4"
+    "tailwind-merge": "^3.0.1",
+    "three": "^0.173.0",
+    "web-vitals": "^2.1.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thepranaygupta/react-tailwind-css-starter-pack.git"
+  },
+  "author": "Pranay Gupta",
+  "bugs": {
+    "url": "https://github.com/thepranaygupta/react-tailwind-css-starter-pack/issues"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
@@ -32,5 +47,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.2.7"
   }
 }
