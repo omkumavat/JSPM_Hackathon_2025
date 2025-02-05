@@ -15,6 +15,10 @@ const Worker = new mongoose.Schema({
     type: String,
     required: true
 }, 
+currentLoad:{
+  type:Number,
+  default:0,
+},
   status: {    type: String,
     enum: ['available', 'busy', 'offline'],
     default: 'available',
