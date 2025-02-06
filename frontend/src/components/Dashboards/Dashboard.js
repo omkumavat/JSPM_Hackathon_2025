@@ -20,12 +20,12 @@ const Dashboard = () => {
 
       {/* Sidebar Navigation */}
       <div
-        className={`fixed lg:static inset-y-0 z-0 left-0 w-64 bg-white border-r border-gray-200 overflow-y-auto transition-transform duration-300 ${
+        className={`fixed lg:static inset-y-0 z-0 left-0 w-64 bg-gray-100 border-r border-gray-200 overflow-y-auto transition-transform duration-300 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
         <div className="p-4">
-          <div className="flex justify-center items-center text-center space-x-2 mb-6">
+          <div className="flex justify-center items-center shadow-xl rounded-md p-1 text-center space-x-2 mb-6">
             <Users className="text-blue-600" />
             <h2 className="text-xl font-semibold">Navigation</h2>
           </div>
