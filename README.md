@@ -31,7 +31,6 @@ Greedy Load Based Execution: workers with low load balanced can be allocated to 
   * [Features](#dart-features)
 - [Getting Started](#toolbox-getting-started)
   * [Prerequisites](#bangbang-prerequisites)
-  * [Installation](#gear-installation)
   * [Run Locally](#running-run-locally)
 - [Roadmap](#compass-roadmap)
 - [FAQ](#grey_question-faq)
