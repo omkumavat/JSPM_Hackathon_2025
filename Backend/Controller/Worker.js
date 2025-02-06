@@ -5,6 +5,8 @@ import Admin from '../Models/Admin.js';
 import Queue from '../Models/Queue.js';
 import Task from '../Models/Task.js';
 import cron from 'node-cron';
+import mongoose from "mongoose";
+
 
 export const signUpWorker = async (req, res) => {
     try {
@@ -222,68 +224,72 @@ export const getAllWorkers = async (req, res) => {
 
 
 // controllers/taskAndWorkerController.js
-
-
 export const checkAndCompleteAndReassign = async () => {
-  try {
-    const now = Date.now();
-
- 
-    const tasks = await Task.find({
-      status: "in-progress",
-      execution_time: { $ne: null }
-    });
-    for (let task of tasks) {
-      // Convert execution_time from seconds to milliseconds (adjust if your unit is different)
-      const executionTimeMs = task.execution_time * 1000;
-      const finishTime = task.updatedAt.getTime() + executionTimeMs;
-
-    //   console.log(now  ," sof " , finishTime);
-
-      if (finishTime <= now) {
-        task.status = "completed";
-        task.completedAt = new Date();
-        await task.save();
-        // console.log(`    Task ${task._id} marked as completed.`);
-      }
-    }
-
-   
-    const workers = await Worker.find({});
-    for (let worker of workers) {
-      let needToSave = false;
-      // If there's a current task, check if it's completed
-      if (worker.currentTask) {
-        const currentTask = await Task.findById(worker.currentTask);
-        if (currentTask && currentTask.status === "completed") {
-          // Move currentTask to completedTask array
-          worker.completedTask.push(worker.currentTask);
-        //   console.log(worker.currentLoad + "dfdsf   " + currentTask.execution_time);
-          worker.currentLoad -= currentTask.execution_time
-        //   console.log(worker.currentLoad + "dfdsf   " + currentTask.execution_time);
-          worker.currentTask = null;
-          console.log(`Worker ${worker._id} completed task ${currentTask._id}`);
-          needToSave = true;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+  
+    try {
+      const now = Date.now();
+  
+      // 1. Find and update tasks that have exceeded their execution time
+      const tasks = await Task.find({ status: "in-progress", execution_time: { $ne: null } }).session(session);
+  
+      for (let task of tasks) {
+        const executionTimeMs = task.execution_time * 1000;
+        const finishTime = task.updatedAt.getTime() + executionTimeMs;
+  
+        if (finishTime < now) {
+          task.status = "completed";
+          task.completedAt = new Date();
+          await task.save({ session });
         }
       }
-      
-    
-      if ((!worker.currentTask) && worker.pendingTask && worker.pendingTask.length > 0) {
-        const nextTask = worker.pendingTask.shift(); // remove the first pending task (FIFO)
-        nextTask.updatedAt = Date.now();
-        worker.currentTask = nextTask;
-        console.log(`Worker ${worker._id} assigned new task ${nextTask}`);
-        needToSave = true;
+  
+      // 2. Fetch all workers
+      const workers = await Worker.find({}).session(session);
+  
+      for (let worker of workers) {
+        let needToSave = false;
+  
+        // Check if the worker's current task is completed
+        if (worker.currentTask) {
+          const currentTask = await Task.findById(worker.currentTask).session(session);
+          if (currentTask && currentTask.status === "completed") {
+            worker.completedTask.push(worker.currentTask);
+            worker.currentLoad -= currentTask.execution_time;
+            worker.currentTask = null;
+            needToSave = true;
+          }
+        }
+  
+        // Assign a new task if no current task and pendingTask is available
+        if (!worker.currentTask && worker.pendingTask && worker.pendingTask.length > 0) {
+          const nextTaskId = worker.pendingTask.shift();
+          const nextTask = await Task.findById(nextTaskId).session(session);
+  
+          if (nextTask) {
+            nextTask.updatedAt = new Date();
+            worker.currentTask = nextTask._id;
+            await nextTask.save({ session }); // Save updatedAt timestamp for the task
+            needToSave = true;
+          }
+        }
+  
+        if (needToSave) {
+          await worker.save({ session });
+        }
       }
-
-      if (needToSave) {
-        await worker.save();
-      }
+  
+      // Commit the transaction if everything succeeds
+      await session.commitTransaction();
+      session.endSession();
+    } catch (error) {
+      // Rollback all changes in case of failure
+      await session.abortTransaction();
+      session.endSession();
+      console.error("Error in checkAndCompleteAndReassign:", error);
     }
-  } catch (error) {
-    console.error("Error in checkAndCompleteAndReassign:", error);
-  }
-};
+  };
 
 
 cron.schedule('*/1 * * * * *', () => {
