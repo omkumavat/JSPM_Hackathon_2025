@@ -29,7 +29,11 @@ const TaskCard = ({ task, onDelete }) => {
         {/* Time and Status */}
         <div className="flex items-center text-gray-600 mb-3">
           <Clock size={18} className="mr-2" />
-          <span>{task.createdAt.split("T")[0]}</span>
+          {
+            task.createdAt &&  (
+              <span>{task.createdAt.split("T")[0]}</span>
+            )
+          }
         </div>
 
         {/* Status */}

@@ -1,7 +1,12 @@
 import React, { useState } from 'react'
 import TaskCard from '../TaskCard'
+import { useAuth } from '../../Context/AuthProvider'
+import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+
 
 const WorkerDashboard = () => {
+  const {currentUser,logout}=useAuth()
   // Sample data for tasks
   const tasks = [
     { id: 1, status: 'pending', name: 'Task 1' },
@@ -10,11 +15,32 @@ const WorkerDashboard = () => {
     { id: 4, status: 'completed', name: 'Task 4' },
   ]
 
+  const navigate=useNavigate()
   // State to track the filter (pending or completed)
   const [filter, setFilter] = useState('pending')
 
   // Filter tasks based on the selected status
   const filteredTasks = tasks.filter(task => task.status === filter)
+
+  const handlelogout=async()=>{
+    try {
+      // toast.success("LogOut Successfuly..")
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate a delay
+      await logout();
+      navigate('/login');
+      // setIsLoggedIn(false);
+      window.location.reload();
+    } catch (error) {
+      // toast.error("Failed to LogOut, try again later..")
+      console.error("Error during logout:", error);
+    } finally {
+      // setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    console.log(currentUser)
+  }, []); 
 
   return (
     <div className="flex h-screen">
@@ -41,6 +67,12 @@ const WorkerDashboard = () => {
           <div>
             <p className='bg-red-700 p-2 font-bold fomt-poppins rounded-md  text-center text-white '>Go Offline</p>
           </div>
+          <button
+            onClick={() => handlelogout}
+            className={`w-full py-2 mb-2 mt-5 text-left px-4 rounded-lg border-2`}
+          >
+            LogOut
+          </button>
         </div>
       </div>
 

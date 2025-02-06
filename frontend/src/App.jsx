@@ -19,6 +19,8 @@ function App() {
       { name: 'Completed Task 2' }
     ]
   };
+
+  // localStorage.removeItem('Users');
   
   return (
     <div className="app-container">

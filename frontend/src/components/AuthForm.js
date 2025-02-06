@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../Context/AuthProvider";
 export default function AuthForm() {
+  const {login,currentUser}=useAuth();
   const [mode, setMode] = useState("login");
   const [userType, setUserType] = useState("worker");
   const[isLogin , setIsLogin] = useState(false);
@@ -53,6 +55,9 @@ export default function AuthForm() {
 
       if (response.ok) {
         setIsWorker(true);
+        login(data);
+        localStorage.setItem("Users", JSON.stringify(data));
+        console.log(currentUser);
         navigate("/dashboard");
         alert(
           mode === "login"
