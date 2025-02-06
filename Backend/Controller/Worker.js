@@ -297,3 +297,49 @@ cron.schedule('*/1 * * * * *', () => {
 checkAndCompleteAndReassign();
 });
 
+
+export const getWorkerWithTasks = async (req, res) => {
+  try {
+    const { workerId } = req.params;
+    console.log(workerId)
+
+    const worker = await Worker.findById(workerId)
+      .populate('currentTask')  // Populate current task
+      .populate('pendingTask')   // Populate all pending tasks
+      .populate('completedTask'); // Populate all completed tasks
+
+    if (!worker) {
+      return res.status(404).json({ message: 'Worker not found' });
+    }
+
+    res.status(200).json(worker);
+  } catch (error) {
+    console.error('Error fetching worker data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+const setWorkerStatusAvailable = async (req, res) => {
+  try {
+    const { workerId } = req.params; // Get workerId from params
+
+    // Find the worker by ID and update their status to 'available'
+    const worker = await Worker.findByIdAndUpdate(
+      workerId,
+      { status: 'available' },
+      { new: true } // Return the updated worker document
+    );
+
+    if (!worker) {
+      return res.status(404).json({ message: 'Worker not found' });
+    }
+
+    // Return the updated worker details
+    res.status(200).json({ message: 'Worker status updated to available', success:true });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+export { setWorkerStatusAvailable };

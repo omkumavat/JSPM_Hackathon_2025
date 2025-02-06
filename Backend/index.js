@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
 import AdminRoute from "./Routes/AdminRoute.js"
+import QueueRoute from "./Routes/QueueRoute.js"
 
 const app = express();
 app.use(bodyParser.json({ limit: '100mb' })); // Adjust the limit as needed
@@ -32,6 +33,7 @@ app.use('/server/worker',WorkerRoute)
 
 import TaskRoute from './Routes/TaskRoute.js';
 app.use('/server/task',TaskRoute)
+app.use('/server/queue',QueueRoute)
 
 app.get('/', (req, res) => {
   res.send('Hello World')
