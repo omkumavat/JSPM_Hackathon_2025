@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Users, Menu, X } from "lucide-react";
-import { useAuth } from "../../Context/AuthProvider"; 
+import { useAuth } from "../../Context/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import TaskForm from "../TaskForm";
 import TaskCard from "../TaskCard";
@@ -10,7 +10,7 @@ const Dashboard = () => {
   const [selectedView, setSelectedView] = useState("workers");
   const [addTaskForm, setAddTaskForm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { currentUser, logout } = useAuth(); 
+  const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
 
   // Redirect to login if admin is not logged in
@@ -26,7 +26,7 @@ const Dashboard = () => {
   // Logout function for admin
   const handleLogout = async () => {
     try {
-      await logout(); 
+      await logout();
       navigate("/login"); // Redirect to login page
       window.location.reload(); // Refresh page after logout
     } catch (error) {
@@ -46,12 +46,12 @@ const Dashboard = () => {
 
       {/* Sidebar Navigation */}
       <div
-        className={`fixed lg:static inset-y-0 z-10 left-0 w-64 bg-white border-r border-gray-200 overflow-y-auto transition-transform duration-300 ${
+        className={`fixed lg:static inset-y-0 z-0 left-0 w-64 bg-gray-100 border-r border-gray-200 overflow-y-auto transition-transform duration-300 ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0`}
       >
         <div className="p-4">
-          <div className="flex justify-center items-center text-center space-x-2 mb-6">
+          <div className="flex justify-center items-center shadow-xl rounded-md p-1 text-center space-x-2 mb-6">
             <Users className="text-blue-600" />
             <h2 className="text-xl font-semibold">Admin Panel</h2>
           </div>
