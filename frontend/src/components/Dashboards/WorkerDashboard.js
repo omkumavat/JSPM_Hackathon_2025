@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 
 const WorkerDashboard = () => {
   const {currentUser,logout}=useAuth()
+
   // Sample data for tasks
   const tasks = [
     { id: 1, status: 'pending', name: 'Task 1' },

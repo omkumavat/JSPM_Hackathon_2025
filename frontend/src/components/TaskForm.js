@@ -34,7 +34,7 @@ const TaskForm = ({ setAddTaskForm }) => {
     <div className="relative">
       <div className=" px-4 sm:px-6 lg:px-8 relative z-50">
         <div className="max-w-lg mx-auto bg-white rounded-xl shadow-lg p-8">
-          <div onClick={() => setAddTaskForm(false)} className="bg-red-600 cursor-pointer text-white rounded-full p-2 w-fit absolute  right-[28%]">
+          <div onClick={() => setAddTaskForm(false)} className="bg-red-600 cursor-pointer text-white rounded-full p-2 w-fit absolute  right-[30%]">
             <ImCross />
           </div>
           <div className="flex items-center justify-center mb-6">

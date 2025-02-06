@@ -5,9 +5,69 @@ import Admin from '../Models/Admin.js';
 import Queue from '../Models/Queue.js';
 import Worker from '../Models/Worker.js';
 import cron from 'node-cron';
+import jwt from 'jsonwebtoken';
 
 // controllers/adminController.js
 // import Admin from '../models/Admin.js';
+
+export const login = async (req, res) => {
+    try {
+      const { email, password } = req.body;
+  
+     
+      if (!email || !password) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Please provide email and password" });
+      }
+  
+     
+      let admin = await Admin.findOne({ email });
+      if (!admin) {
+        return res
+          .status(401)
+          .json({ success: false, message: "Admin does not exist" });
+      }
+  
+      
+     
+      const payload = {
+        email: admin.email,
+        id: admin._id,
+        username: admin.username,
+      };
+  
+      // Sign the JWT
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: "2h", // Adjust as needed
+      });
+  
+      // Remove password before sending admin data to the client
+      admin = admin.toObject();
+      delete admin.password; // or admin.password = undefined;
+  
+      // Attach the token to a cookie (optional)
+      const options = {
+        expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
+        httpOnly: true,
+        // secure: true, // Uncomment in production (HTTPS)
+        // sameSite: 'none', // Adjust based on your front-end domain
+      };
+  
+      // Send response with the cookie and JSON data
+      res.cookie("token", token, options).status(200).json({
+          success: true,
+          message: "Admin logged in successfully",
+          token,
+          admin, // Return the admin data (minus password)
+        });
+    } catch (error) {
+      console.error("Admin login error:", error);
+      return res
+        .status(500)
+        .json({ success: false, message: "Internal server error" });
+    }
+  };
 
 export const createAdmin = async (req, res) => {
   try {
