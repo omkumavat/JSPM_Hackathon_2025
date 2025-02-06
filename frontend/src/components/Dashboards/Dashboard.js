@@ -62,11 +62,15 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
-        <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6 ml-12 lg:ml-7">Dashboard</h1>
+
+
         {/* Render Selected View */}
         <div>{addTaskForm && <TaskForm setAddTaskForm={setAddTaskForm} />}</div>
+
         {/* ✅ Renders AllWorker */}
-        {selectedView === "workers" && <AllWorker />}z
+        {selectedView === "workers" && <AllWorker />}
+
         {selectedView === "tasks" && (
           <div>
             <h2 className="text-xl font-semibold mb-4">All Tasks</h2>
