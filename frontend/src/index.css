@@ -4,3 +4,17 @@
 body {
   font-family: "poppins", sans-serif;
 }
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(100%);
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle 2s infinite linear;
+}
