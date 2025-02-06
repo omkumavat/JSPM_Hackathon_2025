@@ -16,7 +16,7 @@ const TaskCard = ({ task, onDelete }) => {
       <div className="p-6">
         <div className="flex justify-between items-center mb-4">
           <span className="px-3 py-1  bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium">
-            {task.id}
+            {task.task_name}
           </span>
           <button
             onClick={handleToggleDeleteOption} // Toggle delete option visibility
@@ -26,15 +26,14 @@ const TaskCard = ({ task, onDelete }) => {
           </button>
         </div>
 
-        {/* Task Name */}
-        <h3 className="text-xl font-semibold text-gray-800 mb-3">
-          {task.name}
-        </h3>
-
         {/* Time and Status */}
         <div className="flex items-center text-gray-600 mb-3">
           <Clock size={18} className="mr-2" />
-          <span>{task.time}</span>
+          {
+            task.createdAt &&  (
+              <span>{task.createdAt.split("T")[0]}</span>
+            )
+          }
         </div>
 
         {/* Status */}

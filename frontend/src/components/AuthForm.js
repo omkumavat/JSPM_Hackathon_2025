@@ -1,44 +1,76 @@
-import React, { useState } from 'react';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
-
+import React, { useState } from "react";
+import { Mail, Lock, User, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../Context/AuthProvider";
 export default function AuthForm() {
-  const [mode, setMode] = useState('login');
-  const [userType, setUserType] = useState('worker');
+  const {login,currentUser}=useAuth();
+  const [mode, setMode] = useState("login");
+  const [userType, setUserType] = useState("worker");
+  const[isLogin , setIsLogin] = useState(false);
+  const[isAdmin , setIsAdmin] = useState(false);
+  const[isWorker , setIsWorker] = useState(false); 
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
+    name: "",
+    email: "",
+    password: "",
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (userType === 'admin') {
-      if (formData.email === 'abc@gmail.com' && formData.password === '123') {
-        alert('Admin login successful');
+    if (userType === "admin") {
+      // Admin Login Validation
+      if (formData.email === "abc@gmail.com" && formData.password === "123") {
+        setIsLogin(true);
+        navigate("/adashboard")
+        alert("Admin login successful");
       } else {
-        alert('Invalid admin credentials');
+        alert("Invalid admin credentials");
       }
-    } else {
-      try {
-        const response = await fetch('http://localhost:4000/server/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(formData),
-        });
+      return;
+    }
 
-        const data = await response.json();
-        if (response.ok) {
-          alert('Worker login successful');
-        } else {
-          alert(data.message || 'Worker login failed');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Something went wrong');
+    // Determine the correct API endpoint for Worker
+    const endpoint =
+      mode === "login"
+        ? "http://localhost:4000/server/worker/login-worker"
+        : "http://localhost:4000/server/worker/signup-worker";
+
+    try {
+      const requestBody =
+        mode === "signup"
+          ? formData
+          : { email: formData.email, password: formData.password };
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsWorker(true);
+        login(data);
+        localStorage.setItem("Users", JSON.stringify(data));
+        console.log(currentUser);
+        navigate("/dashboard");
+        alert(
+          mode === "login"
+            ? "Worker login successful!"
+            : "Worker signup successful!"
+        );
+        setIsLogin(true);
+      } else {
+        alert(data.message || "Authentication failed");
       }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Something went wrong");
     }
   };
 
@@ -55,23 +87,27 @@ export default function AuthForm() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg relative z-10">
         <div className="text-center">
           <h2 className="text-3xl font-bold text-gray-900">
-            {mode === 'login' ? 'Welcome back' : 'Create account'}
+            {mode === "login" ? "Welcome back" : "Create account"}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+            {mode === "login"
+              ? "Don't have an account? "
+              : "Already have an account? "}
             <button
-              onClick={() => setMode(mode === 'login' ? 'signup' : 'login')}
+              onClick={() => setMode(mode === "login" ? "signup" : "login")}
               className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
             >
-              {mode === 'login' ? 'Sign up' : 'Log in'}
+              {mode === "login" ? "Sign up" : "Log in"}
             </button>
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-          {mode === 'signup' && (
+          {mode === "signup" && (
             <div className="relative">
-              <label htmlFor="name" className="sr-only">Full Name</label>
+              <label htmlFor="name" className="sr-only">
+                Full Name
+              </label>
               <User className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 id="name"
@@ -87,7 +123,9 @@ export default function AuthForm() {
           )}
 
           <div className="relative">
-            <label htmlFor="email" className="sr-only">Email address</label>
+            <label htmlFor="email" className="sr-only">
+              Email address
+            </label>
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               id="email"
@@ -102,7 +140,9 @@ export default function AuthForm() {
           </div>
 
           <div className="relative">
-            <label htmlFor="password" className="sr-only">Password</label>
+            <label htmlFor="password" className="sr-only">
+              Password
+            </label>
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               id="password"
@@ -116,9 +156,12 @@ export default function AuthForm() {
             />
           </div>
 
-          {mode === 'login' && (
+          {mode === "login" && (
             <div className="flex items-center justify-end">
-              <button type="button" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+              <button
+                type="button"
+                className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
+              >
                 Forgot your password?
               </button>
             </div>
@@ -126,7 +169,9 @@ export default function AuthForm() {
 
           {/* Dropdown for User Type */}
           <div className="relative">
-            <label htmlFor="userType" className="sr-only">User Type</label>
+            <label htmlFor="userType" className="sr-only">
+              User Type
+            </label>
             <select
               id="userType"
               name="userType"
@@ -146,7 +191,7 @@ export default function AuthForm() {
             <span className="absolute right-4 inset-y-0 flex items-center">
               <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </span>
-            {mode === 'login' ? 'Sign in' : 'Create account'}
+            {mode === "login" ? "Sign in" : "Create account"}
           </button>
         </form>
       </div>

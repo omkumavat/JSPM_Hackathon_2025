@@ -20,6 +20,8 @@ function App() {
     ]
   };
 
+  // localStorage.removeItem('Users');
+  
   return (
     <div className="app-container">
       <div className="content">
