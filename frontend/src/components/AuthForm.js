@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthProvider";
+import axios from "axios";
+
+
+
 export default function AuthForm() {
   const {login,currentUser}=useAuth();
   const [mode, setMode] = useState("login");
@@ -10,6 +14,8 @@ export default function AuthForm() {
   const[isAdmin , setIsAdmin] = useState(false);
   const[isWorker , setIsWorker] = useState(false); 
   const navigate = useNavigate();
+
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,13 +27,33 @@ export default function AuthForm() {
 
     if (userType === "admin") {
       // Admin Login Validation
-      if (formData.email === "abc@gmail.com" && formData.password === "123") {
+
+      const response = await fetch("http://localhost:4000/server/admin/login", {
+        method: "POST",
+        headers: {  
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify( { email: formData.email, password: formData.password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setIsAdmin(true);
+        login(data);
+        localStorage.setItem("Users", JSON.stringify(data));
+        console.log(currentUser);
+        navigate("/adashboard");
+        alert(
+          mode === "login"
+            ? "Admin login successful!"
+            : "Worker signup successful!"
+        );
         setIsLogin(true);
-        navigate("/adashboard")
-        alert("Admin login successful");
       } else {
-        alert("Invalid admin credentials");
+        alert(data.message || "Authentication failed");
       }
+
       return;
     }
 
