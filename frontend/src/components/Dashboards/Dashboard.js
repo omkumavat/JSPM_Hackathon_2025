@@ -22,7 +22,7 @@ const Dashboard = () => {
     if (currentUser) {
       try {
         // const workerId = currentUser.worker._id;
-        const response = await axios.get(`http://localhost:4000/server/queue/getAllQueueItems`);
+        const response = await axios.get(`https://jspm-hackathon-2025.vercel.app/server/queue/getAllQueueItems`);
         //console.log(response , "dsaf");
 
         setTask(response.data || []);

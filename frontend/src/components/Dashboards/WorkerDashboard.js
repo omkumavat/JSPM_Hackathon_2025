@@ -38,7 +38,7 @@ const WorkerDashboard = () => {
     if (currentUser) {
       try {
         const workerId = currentUser.worker._id;
-        const response = await axios.get(`http://localhost:4000/server/worker/get-worker-full/${workerId}`);
+        const response = await axios.get(`https://jspm-hackathon-2025.vercel.app/server/worker/get-worker-full/${workerId}`);
 
         setPendingTasks(response.data.pendingTask || []);
         setCompletedTasks(response.data.completedTask || []);
@@ -56,7 +56,7 @@ const WorkerDashboard = () => {
       try {
         const workerId = currentUser.worker._id;
         const newStatus = status === 'available' ? 'offline' : 'available'; // Toggle status
-        const response = await axios.get(`http://localhost:4000/server/worker/set-${newStatus}/${workerId}`);
+        const response = await axios.get(`https://jspm-hackathon-2025.vercel.app/server/worker/set-${newStatus}/${workerId}`);
 
         if (response.data.success) {
           setStatus(newStatus); // Update the local status

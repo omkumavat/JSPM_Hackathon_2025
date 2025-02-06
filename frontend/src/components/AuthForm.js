@@ -28,7 +28,7 @@ export default function AuthForm() {
     if (userType === "admin") {
       // Admin Login Validation
 
-      const response = await fetch("http://localhost:4000/server/admin/login", {
+      const response = await fetch("https://jspm-hackathon-2025.vercel.app/server/admin/login", {
         method: "POST",
         headers: {  
           "Content-Type": "application/json",
@@ -60,8 +60,8 @@ export default function AuthForm() {
     // Determine the correct API endpoint for Worker
     const endpoint =
       mode === "login"
-        ? "http://localhost:4000/server/worker/login-worker"
-        : "http://localhost:4000/server/worker/signup-worker";
+        ? "https://jspm-hackathon-2025.vercel.app/server/worker/login-worker"
+        : "https://jspm-hackathon-2025.vercel.app/server/worker/signup-worker";
 
     try {
       const requestBody =

@@ -14,7 +14,7 @@ const AllWorker = () => {
     const fetchWorkers = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:4000/server/worker/getAllWorkers"
+          "https://jspm-hackathon-2025.vercel.app/server/worker/getAllWorkers"
         );
         setWorkers(response.data);
       } catch (error) {
@@ -25,7 +25,7 @@ const AllWorker = () => {
     const fetchTasks = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:4000/server/task/getAllTasks"
+          "https://jspm-hackathon-2025.vercel.app/server/task/getAllTasks"
         );
         setTasks(response.data);
       } catch (error) {
