@@ -5,15 +5,43 @@ import { useNavigate } from "react-router-dom";
 import TaskForm from "../TaskForm";
 import TaskCard from "../TaskCard";
 import AllWorker from "../AllWorker";
+import axios from "axios";
+import Queuecard from "../Queuecard";
 
 const Dashboard = () => {
   const [selectedView, setSelectedView] = useState("workers");
   const [addTaskForm, setAddTaskForm] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { currentUser, logout } = useAuth();
+    const [task, setTask] = useState([]);
   const navigate = useNavigate();
 
   // Redirect to login if admin is not logged in
+
+  const fetchWorker = async () => {
+    if (currentUser) {
+      try {
+        // const workerId = currentUser.worker._id;
+        const response = await axios.get(`http://localhost:4000/server/queue/getAllQueueItems`);
+        console.log(response , "dsaf");
+
+        setTask(response.data || []);
+      } catch (error) {
+        console.error("Error fetching worker:", error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    fetchWorker();
+    const intervalId = setInterval(() => {
+      fetchWorker();
+    }, 2000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+
 
   console.log("priting curent user", currentUser);
 
@@ -102,8 +130,12 @@ const Dashboard = () => {
         {selectedView === "tasks" && (
           <div>
             <h2 className="text-xl font-semibold mb-4">All Tasks</h2>
-            <div className="flex flex-wrap gap-6">
-              {/* Task List Rendering */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {task.length > 0 ? (
+                task.map((item) => <Queuecard key={item._id} queueItem={item} />)
+              ) : (
+                <p>No queue items found.</p>
+              )}
             </div>
           </div>
         )}

@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { ImCross } from "react-icons/im";
-const TaskForm = ({ setAddTaskForm }) => {
+import axios from "axios";
+
+
+const  TaskForm = ({ setAddTaskForm }) => {
   const [formData, setFormData] = useState({
     task_name: "",
     description: "",
@@ -10,18 +13,53 @@ const TaskForm = ({ setAddTaskForm }) => {
     priority: 1,
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    setFormData({
-      task_name: "",
-      description: "",
-      tags: "",
-      execution_time: "",
-      priority: 1,
-    });
-  };
 
+    try {
+      // Convert comma-separated tags to an array if needed
+      const tagsArray = formData.tags
+        ? formData.tags.split(",").map((tag) => tag.trim())
+        : [];
+
+      // Prepare the task data to send
+      const taskData = {
+        task_name: formData.task_name,
+        description: formData.description,
+        tags: tagsArray,
+        execution_time: parseInt(formData.execution_time, 10) || 0,
+        priority: formData.priority,
+      };
+
+      const url =
+        "http://localhost:4000/server/admin/createTaskForAdmin/67a3c301a6f630ed0d44b712";
+
+      const response = await axios.post(url, taskData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("Server Response:", response.data);
+
+      // Reset form after successful submission
+      setFormData({
+        task_name: "",
+        description: "",
+        tags: "",
+        execution_time: "",
+        priority: 1,
+      });
+      alert("Task created successfully!");
+    } catch (error) {
+      console.error("Error creating task:", error);
+      if (error.response) {
+        alert(error.response.data.message || "Failed to create task");
+      } else {
+        alert("Something went wrong");
+      }
+    }
+  };
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -34,7 +72,7 @@ const TaskForm = ({ setAddTaskForm }) => {
     <div className="relative">
       <div className=" px-4 sm:px-6 lg:px-8 relative z-50">
         <div className="max-w-lg mx-auto bg-white rounded-xl shadow-lg p-8">
-          <div onClick={() => setAddTaskForm(false)} className="bg-red-600 cursor-pointer text-white rounded-full p-2 w-fit absolute  right-[30%]">
+          <div onClick={() => setAddTaskForm(false)} className="bg-red-600 cursor-pointer text-white rounded-full p-2 w-fit absolute xl:right-[30%]   lg:right-[26%] md:right-[25%]  sm:right-[15%]">
             <ImCross />
           </div>
           <div className="flex items-center justify-center mb-6">
@@ -109,7 +147,7 @@ const TaskForm = ({ setAddTaskForm }) => {
                 Execution Time
               </label>
               <input
-                type="datetime-local"
+                type="number"
                 id="execution_time"
                 name="execution_time"
                 value={formData.execution_time}
