@@ -17,6 +17,12 @@ const WorkerDashboard = () => {
   const [filter, setFilter] = useState('pending');
   const [status, setStatus] = useState('available'); // Track worker status
 
+    useEffect(() => {
+      if (!currentUser) {
+        navigate("/login");
+      }
+    }, [currentUser, navigate]);
+
   const handleLogout = async () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
