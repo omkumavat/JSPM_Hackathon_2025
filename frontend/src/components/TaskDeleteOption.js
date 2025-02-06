@@ -8,7 +8,7 @@ const TaskDeleteOption = ({ task, onDelete }) => {
       // Send DELETE request to your API endpoint
       const response = await axios.delete(`/api/tasks/${taskId}`);
       if (response.status === 200) {
-        console.log('Task deleted successfully');
+        //console.log('Task deleted successfully');
         onDelete(taskId); // Call parent component's onDelete to remove the task from state
       }
     } catch (error) {

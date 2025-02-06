@@ -20,7 +20,7 @@ const transporter = nodemailer.createTransport({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const sendSignUpSuccessfulEmail = async (req, res) => {
-    console.log(req.body);
+    //console.log(req.body);
     const { name, email } = req.body;
     const templatePath = path.join(__dirname, "../views", 'SignUPEmail.hbs');
     const templateSource = fs.readFileSync(templatePath, "utf-8");

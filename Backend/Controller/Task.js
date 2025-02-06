@@ -5,7 +5,7 @@ import Admin from '../Models/Admin.js';
 export const deleteTask = async (req, res) => {
     try {
         const { taskId } = req.params;
-        console.log(`Deleting Task: ${taskId}`);
+        //console.log(`Deleting Task: ${taskId}`);
 
         // Step 1: Find and delete the task
         const task = await Task.findByIdAndDelete(taskId);

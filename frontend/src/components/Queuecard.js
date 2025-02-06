@@ -4,7 +4,7 @@ import { Clock, CheckCircle2, XCircle } from "lucide-react";
 const QueueItemCard = ({ queueItem }) => {
   // For debugging
   useEffect(() => {
-    console.log("Queue item:", queueItem);
+    //console.log("Queue item:", queueItem);
   }, [queueItem]);
 
   // Extract queue-level data
@@ -59,7 +59,21 @@ const QueueItemCard = ({ queueItem }) => {
         {/* Time (createdAt or completedAt) */}
         <div className="flex items-center text-gray-600 mb-3">
           <Clock size={18} className="mr-2" />
-          <span>{(completedAt || createdAt || "").split("T")[0]}</span>
+            <span> {(() => {
+            const dateValue = completedAt || createdAt;
+            if (!dateValue) return '';
+
+            const dateObj = new Date(dateValue);
+            // e.g. "2/6/2025, 1:30 PM" in en-US
+            const dateTimeString = dateObj.toLocaleString();
+            const [datePart, timePart] = dateTimeString.split(', ');
+
+            // If there's no comma split (locale variations), just return the whole string
+            if (!timePart) return dateTimeString;
+
+            // Combine datePart and timePart with a space (instead of comma)
+            return `${datePart} ${timePart}`;
+      })()}</span>
         </div>
 
         {/* Status Label & Icon */}

@@ -23,7 +23,7 @@ const Dashboard = () => {
       try {
         // const workerId = currentUser.worker._id;
         const response = await axios.get(`http://localhost:4000/server/queue/getAllQueueItems`);
-        console.log(response , "dsaf");
+        //console.log(response , "dsaf");
 
         setTask(response.data || []);
       } catch (error) {
@@ -43,7 +43,7 @@ const Dashboard = () => {
 
 
 
-  console.log("priting curent user", currentUser);
+  //console.log("priting curent user", currentUser);
 
   useEffect(() => {
     if (!currentUser) {

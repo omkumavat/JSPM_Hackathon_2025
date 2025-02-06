@@ -42,7 +42,7 @@ export default function AuthForm() {
         setIsAdmin(true);
         login(data);
         localStorage.setItem("Users", JSON.stringify(data));
-        console.log(currentUser);
+        //console.log(currentUser);
         navigate("/adashboard");
         alert(
           mode === "login"
@@ -83,7 +83,7 @@ export default function AuthForm() {
         setIsWorker(true);
         login(data);
         localStorage.setItem("Users", JSON.stringify(data));
-        console.log(currentUser);
+        //console.log(currentUser);
         navigate("/dashboard");
         alert(
           mode === "login"

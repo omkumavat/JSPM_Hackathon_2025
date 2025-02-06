@@ -17,11 +17,11 @@ const WorkerDashboard = () => {
   const [filter, setFilter] = useState('pending');
   const [status, setStatus] = useState('available'); // Track worker status
 
-    useEffect(() => {
-      if (!currentUser) {
-        navigate("/login");
-      }
-    }, [currentUser, navigate]);
+  useEffect(() => {
+    if (!currentUser) {
+      navigate("/login");
+    }
+  }, [currentUser, navigate]);
 
   const handleLogout = async () => {
     try {
@@ -94,9 +94,12 @@ const WorkerDashboard = () => {
   }, [filter, pendingTasks, completedTasks, ongoingTask]);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex">
+      {/* Toast for status notifications */}
       <ToastContainer position="top-right" autoClose={3000} />
-      <div className="w-64 bg-slate-300 text-black p-4 shadow-md rounded-md">
+
+      {/* Fixed Sidebar */}
+      <div className="w-64 bg-slate-300 fixed top-0 left-0 h-screen text-black p-4 shadow-md">
         <div>
           <p className="text-2xl font-poppins text-center font-bold shadow-2xl rounded-md mb-4">Dashboard</p>
         </div>
@@ -104,19 +107,31 @@ const WorkerDashboard = () => {
           <h3 className="text-2xl font-semibold">Tasks</h3>
           <button
             onClick={() => setFilter('pending')}
-            className={`w-full py-2 mb-2 text-left px-4 rounded-lg border-2 ${filter === 'pending' ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent text-black border-gray-300'}`}
+            className={`w-full py-2 mb-2 text-left px-4 rounded-lg border-2 ${
+              filter === 'pending'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-transparent text-black border-gray-300'
+            }`}
           >
             Pending
           </button>
           <button
             onClick={() => setFilter('ongoing')}
-            className={`w-full py-2 mb-2 text-left px-4 rounded-lg border-2 ${filter === 'ongoing' ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent text-black border-gray-300'}`}
+            className={`w-full py-2 mb-2 text-left px-4 rounded-lg border-2 ${
+              filter === 'ongoing'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-transparent text-black border-gray-300'
+            }`}
           >
             Ongoing
           </button>
           <button
             onClick={() => setFilter('completed')}
-            className={`w-full py-2 mb-2 text-left px-4 rounded-lg border-2 ${filter === 'completed' ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent text-black border-gray-300'}`}
+            className={`w-full py-2 mb-2 text-left px-4 rounded-lg border-2 ${
+              filter === 'completed'
+                ? 'bg-blue-600 text-white border-blue-600'
+                : 'bg-transparent text-black border-gray-300'
+            }`}
           >
             Completed
           </button>
@@ -124,7 +139,9 @@ const WorkerDashboard = () => {
           {/* Toggle between Online/Offline button */}
           <button
             onClick={handleStatusToggle}
-            className={`bg-${status === 'available' ? 'red-700' : 'green-700'} p-2 font-bold font-poppins rounded-md text-center text-white`}
+            className={`bg-${
+              status === 'available' ? 'red-700' : 'green-700'
+            } p-2 font-bold font-poppins rounded-md text-center text-white`}
           >
             {status === 'available' ? 'Set Offline' : 'Set Available'}
           </button>
@@ -138,18 +155,22 @@ const WorkerDashboard = () => {
         </div>
       </div>
 
-      <div className="flex-1 p-6 bg-gray-100">
-        <h3 className="text-3xl font-semibold">{filter.charAt(0).toUpperCase() + filter.slice(1)} Tasks</h3>
-
+      {/* Main Content (pushed right by 64px because of fixed sidebar) */}
+      <div className="ml-64 flex-1 p-6 bg-gray-100 min-h-screen">
+        <h3 className="text-3xl font-semibold">
+          {filter.charAt(0).toUpperCase() + filter.slice(1)} Tasks
+        </h3>
         <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.isArray(filteredTasks) && filteredTasks.length > 0 ? (
-            filteredTasks.map((task, index) => (
-              <TaskCard key={index} task={task} />
-            ))
-          ) : (
-            <p>No tasks to display.</p>
-          )}
-        </div>
+  {Array.isArray(filteredTasks) && filteredTasks.length > 0 ? (
+    filteredTasks.map((task, index) => (
+      // Pass down the filter prop:
+      <TaskCard key={index} task={task} filter={filter} />
+    ))
+  ) : (
+    <p>No tasks to display.</p>
+  )}
+</div>
+
       </div>
     </div>
   );

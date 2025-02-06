@@ -2,19 +2,19 @@ import React from 'react';
 import { User, Circle } from 'lucide-react';
 
 const statusColors = {
-  active: 'bg-green-600',
-  inactive: 'bg-gray-500',
-  busy: 'bg-yellow-500'
+  "available": 'bg-green-600',
+  "offline": 'bg-gray-500',
+  "busy": 'bg-yellow-500'
 };
 
-const statusText = {
-  active: 'Active',
-  inactive: 'Inactive',
-  busy: 'Busy'
-};
+// const statusText = {
+//   "active": 'Active',
+//   "inactive": 'Inactive',
+//   busy: 'Busy'
+// };
 
 const WorkerCard = ({ worker }) => {
-  const cardBgColor = worker.status ? 'bg-green-100' : 'bg-red-100';
+  const cardBgColor = worker.status == "available" ? 'bg-green-100' : 'bg-red-100';
 
   return (
     <div className={`rounded-lg shadow-md p-6 transition-all duration-300 hover:shadow-lg ${cardBgColor}`}>

@@ -77,7 +77,7 @@ export const signUpWorker = async (req, res) => {
 
 export const loginWorker = async (req, res) => {
     try {
-        console.log(req.body);
+        //console.log(req.body);
         const { email, password } = req.body;
         if (!email || !password) {
             return res.status(400).json({
@@ -293,7 +293,7 @@ export const checkAndCompleteAndReassign = async () => {
 
 
 cron.schedule('*/1 * * * * *', () => {
-// console.log('Running scheduled task check and worker reassignment...');
+// //console.log('Running scheduled task check and worker reassignment...');
 checkAndCompleteAndReassign();
 });
 
@@ -301,7 +301,7 @@ checkAndCompleteAndReassign();
 export const getWorkerWithTasks = async (req, res) => {
   try {
     const { workerId } = req.params;
-    console.log(workerId)
+    //console.log(workerId)
 
     const worker = await Worker.findById(workerId)
       .populate('currentTask')  // Populate current task
