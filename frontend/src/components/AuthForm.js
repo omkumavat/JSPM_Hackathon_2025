@@ -38,7 +38,7 @@ export default function AuthForm() {
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && formData.password == "123") {
         setIsAdmin(true);
         login(data);
         localStorage.setItem("Users", JSON.stringify(data));
@@ -47,7 +47,7 @@ export default function AuthForm() {
         alert(
           mode === "login"
             ? "Admin login successful!"
-            : "Worker signup successful!"
+            : "Admin signup successful!"
         );
         setIsLogin(true);
       } else {
